@@ -1,12 +1,21 @@
 package main
 
 import (
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
 
-func welcome(http.ResponseWriter, *http.Request) {
+func welcome(w http.ResponseWriter, r *http.Request) {
 	log.Println("welcome to golang api")
+	d, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "ooops", http.StatusBadRequest)
+		return
+	}
+
+	fmt.Fprintf(w, "welcome %s", d)
 }
 
 func goodBye(http.ResponseWriter, *http.Request) {
