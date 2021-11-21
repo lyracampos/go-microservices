@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/nicholasjackson/env"
 )
 
@@ -19,13 +20,19 @@ func main() {
 	env.Parse()
 
 	l := log.New(os.Stdout, "products-api ", log.LstdFlags)
-
-	// create the handlers
 	ph := handlers.NewProducts(l)
+	sm := mux.NewRouter()
 
-	// create a new serve mux and register the handlers
-	sm := http.NewServeMux()
-	sm.Handle("/", ph)
+	getRouter := sm.Methods(http.MethodGet).Subrouter()
+	getRouter.HandleFunc("/", ph.GetProducts)
+
+	putRouter := sm.Methods(http.MethodPut).Subrouter()
+	putRouter.HandleFunc("/{id:[0-9]+}", ph.UpdateProduct)
+	putRouter.Use(ph.MiddlewareValidateProduct)
+
+	postRouter := sm.Methods(http.MethodPost).Subrouter()
+	postRouter.HandleFunc("/", ph.AddProduct)
+	postRouter.Use(ph.MiddlewareValidateProduct)
 
 	// create a new server
 	s := http.Server{
